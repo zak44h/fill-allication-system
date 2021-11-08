@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  fill_service:
+    build: ./fill_service
+    command: uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+    volumes:
+      - ./fill_service/:/app/
+    ports:
+      - 8001:8000
+    depends_on:
+        - controller_service
+    environment:
+      - CONTROLLER_SERVICE_URL=http://controller_service:8000
+      - MAX_FILL_SERVICE_SLEEP_TIME=30
+      - MAX_WORKERS_PER_TICK=10
+      - FILL_TASK_REPEAT_TIME=3
+  
+  aum_service:
+    build: ./aum_service
+    command: uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+    volumes:
+      - ./aum_service/:/app/
+    ports:
+      - 8002:8000
+    depends_on:
+        - controller_service
+    environment:
+      - CONTROLLER_SERVICE_URL=http://controller_service:8000
+      - AUM_TASK_REPEAT_TIME=10
+
+  controller_service:
+    build: ./controller_service
+    command: uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+    volumes:
+      - ./controller_service/:/app/
+    depends_on:
+      - position_service
+    ports:
+      - 8003:8000
+    environment:
+      - POSITION_SERVICE_URL=http://position_service:8000
+      - CONTROLLER_TASK_REPEAT_TIME=10
+
+  position_service:
+    build: ./position_service
+    command: uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+    volumes:
+      - ./position_service/:/app/
+    ports:
+      - 8004:8000
